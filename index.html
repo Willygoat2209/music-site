@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Music Library</title>
+  <style>
+    body {
+      font-family: 'Roboto', sans-serif;
+      margin: 0;
+      padding: 0;
+      background: linear-gradient(to bottom, #4e54c8, #8f94fb);
+      color: #333;
+    }
+    header {
+      background: rgba(255, 255, 255, 0.1);
+      color: white;
+      padding: 15px 20px;
+      text-align: center;
+      font-size: 1.5rem;
+      font-weight: bold;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+    }
+    .search-bar {
+      display: flex;
+      margin: 20px auto;
+      max-width: 90%;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    .search-bar input {
+      flex: 1;
+      padding: 12px;
+      border: none;
+      font-size: 1rem;
+      outline: none;
+    }
+    .search-bar button {
+      padding: 12px;
+      border: none;
+      background-color: #4e54c8;
+      color: white;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+    .search-bar button:hover {
+      background-color: #373b92;
+    }
+    .music-list {
+      list-style: none;
+      padding: 0;
+      margin: 20px auto;
+      max-width: 90%;
+    }
+    .music-list li {
+      background: white;
+      margin: 10px 0;
+      padding: 15px;
+      border-radius: 8px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      transition: transform 0.2s;
+    }
+    .music-list li:hover {
+      transform: scale(1.02);
+    }
+    .music-list li button {
+      padding: 8px 15px;
+      border: none;
+      background-color: #4e54c8;
+      color: white;
+      border-radius: 5px;
+      font-size: 0.9rem;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+    .music-list li button:hover {
+      background-color: #373b92;
+    }
+    .player-controls {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: rgba(255, 255, 255, 0.9);
+      box-shadow: 0 -4px 6px rgba(0, 0, 0, 0.2);
+      padding: 10px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .player-controls button {
+      background-color: #4e54c8;
+      color: white;
+      border: none;
+      padding: 10px;
+      border-radius: 50%;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+    .player-controls button:hover {
+      background-color: #373b92;
+    }
+    .progress-bar {
+      flex: 1;
+      margin: 0 15px;
+      height: 5px;
+      background: #ddd;
+      border-radius: 5px;
+      overflow: hidden;
+      position: relative;
+    }
+    .progress {
+      height: 100%;
+      background: #4e54c8;
+      width: 0;
+      transition: width 0.2s;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>My Music Library</h1>
+  </header>
+  <div class="search-bar">
+    <input type="text" id="search" placeholder="Search for music...">
+    <button onclick="searchMusic()">Search</button>
+  </div>
+  <ul class="music-list" id="musicList">
+    <!-- Music items will be dynamically added here -->
+  </ul>
+
+  <div class="player-controls" id="playerControls">
+    <button onclick="previousSong()">⏮</button>
+    <button onclick="togglePlayPause()">▶️</button>
+    <button onclick="nextSong()">⏭</button>
+    <div class="progress-bar" onclick="seek(event)">
+      <div class="progress" id="progress"></div>
+    </div>
+  </div>
+
+  <script>
+    const musicRepoUrl = 'https://raw.githubusercontent.com/your-username/your-repo/main/'; // Replace with your repo URL
+    const musicFiles = ["song1.mp3", "song2.mp3", "song3.mp3"]; // Add all your music file names here
+
+    const musicList = document.getElementById('musicList');
+    const progressBar = document.getElementById('progress');
+    let audio = new Audio();
+    let currentSongIndex = 0;
+    let isPlaying = false;
+
+    function loadMusic() {
+      musicList.innerHTML = '';
+      musicFiles.forEach((file, index) => {
+        const li = document.createElement('li');
+        li.innerHTML = `
+          <span>${file}</span>
+          <button onclick="playMusic(${index})">Play</button>
+        `;
+        musicList.appendChild(li);
+      });
+    }
+
+    function searchMusic() {
+      const query = document.getElementById('search').value.toLowerCase();
+      const filteredFiles = musicFiles.filter(file => file.toLowerCase().includes(query));
+      musicList.innerHTML = '';
+      filteredFiles.forEach((file, index) => {
+        const li = document.createElement('li');
+        li.innerHTML = `
+          <span>${file}</span>
+          <button onclick="playMusic(${index})">Play</button>
+        `;
+        musicList.appendChild(li);
+      });
+    }
+
+    function playMusic(index) {
+      currentSongIndex = index;
+      audio.src = `${musicRepoUrl}${musicFiles[currentSongIndex]}`;
+      audio.play();
+      isPlaying = true;
+      updatePlayPauseButton();
+      audio.ontimeupdate = updateProgress;
+    }
+
+    function togglePlayPause() {
+      if (isPlaying) {
+        audio.pause();
+      } else {
+        audio.play();
+      }
+      isPlaying = !isPlaying;
+      updatePlayPauseButton();
+    }
+
+    function previousSong() {
+      currentSongIndex = (currentSongIndex - 1 + musicFiles.length) % musicFiles.length;
+      playMusic(currentSongIndex);
+    }
+
+    function nextSong() {
+      currentSongIndex = (currentSongIndex + 1) % musicFiles.length;
+      playMusic(currentSongIndex);
+    }
+
+    function updateProgress() {
+      const percentage = (audio.currentTime / audio.duration) * 100;
+      progressBar.style.width = `${percentage}%`;
+    }
+
+    function seek(event) {
+      const progressContainer = event.currentTarget;
+      const clickPosition = event.offsetX;
+      const totalWidth = progressContainer.offsetWidth;
+      const seekTime = (clickPosition / totalWidth) * audio.duration;
+      audio.currentTime = seekTime;
+    }
+
+    function updatePlayPauseButton() {
+      const playPauseButton = document.querySelector('.player-controls button:nth-child(2)');
+      playPauseButton.textContent = isPlaying ? '⏸' : '▶️';
+    }
+
+    // Load the music list on page load
+    window.onload = loadMusic;
+  </script>
+</body>
+</html>
